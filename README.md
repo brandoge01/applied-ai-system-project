@@ -17,18 +17,25 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Apps like Spotify blend collaborative filtering with content-based filtering. Since we don't have millions of listeners, this simulation focuses on content-based filtering by matching song attributes directly to a user's taste profile.
 
-Some prompts to answer:
+Each `Song` carries: `genre`, `mood`, `energy`, `valence`, `danceability`, `acousticness`, `instrumentalness`, `loudness_norm`, and `tempo_bpm`.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+Each `UserProfile` stores target values for the same features: `favorite_genre`, `favorite_mood`, `target_energy`, `target_valence`, `target_danceability`, `target_acousticness`, `target_instrumentalness`, `target_loudness_norm`, and `likes_acoustic`.
 
-You can include a simple diagram or bullet list if helpful.
+Algorithm Recipe:
+1. Categorical scoring - Genre and mood are yes/no checks. A match scores 1.0, a mismatch scores 0.0.
+2. Numeric proximity scoring - For each numeric feature: `score = 1 - |song_value - user_preference|`. A perfect match scores 1.0; the further apart, the lower the score.
+3. Weighted combination - Each feature score is multiplied by a weight (e.g., genre = 2.0, energy = 2.0, loudness = 0.5) and divided by the total weight. This produces one final score between 0 and 1.
+4. Ranking - Sort all songs by final score descending, return the top _k_.
 
+Expected Biases:
+Genre dominance - With genre weighted at 2.0, the system may rank a mediocre lofi track above a folk song that perfectly matches the user's energy and mood. Lowering genre weight fixes this but loosens recommendations.
+Filter bubble - Content-based filtering only recommends songs similar to what the user already likes. It will never surface a surprising cross-genre discovery the way collaborative filtering would.
+Catalog bias - The system can only recommend what's in the dataset. If most songs are chill/lofi, energetic users get weaker results regardless of scoring quality.
+Equal feature treatment - The 0-to-1 proximity formula treats all distances the same. In reality, a 0.1 difference in energy might matter more than a 0.1 difference in valence.
+
+![alt text](image.png)
 ---
 
 ## Getting Started
