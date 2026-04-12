@@ -43,13 +43,52 @@ class Recommender:
     def __init__(self, songs: List[Song]):
         self.songs = songs
 
+    def _score_song(self, user: UserProfile, song: Song) -> Tuple[float, List[str]]:
+        """Score a Song object against a UserProfile."""
+        weights = {
+            "genre": 2.0, "mood": 1.5, "energy": 2.0, "valence": 1.0,
+            "danceability": 1.0, "acousticness": 1.5,
+        }
+        scores = {}
+        reasons = []
+
+        if song.genre == user.favorite_genre:
+            scores["genre"] = 1.0
+            reasons.append(f"genre match (+{weights['genre']:.1f})")
+        else:
+            scores["genre"] = 0.0
+            reasons.append("genre mismatch (+0.0)")
+
+        if song.mood == user.favorite_mood:
+            scores["mood"] = 1.0
+            reasons.append(f"mood match (+{weights['mood']:.1f})")
+        else:
+            scores["mood"] = 0.0
+            reasons.append("mood mismatch (+0.0)")
+
+        numeric_pairs = [
+            ("energy", song.energy, user.target_energy),
+            ("valence", song.valence, user.target_valence),
+            ("danceability", song.danceability, user.target_danceability),
+            ("acousticness", song.acousticness, user.target_acousticness),
+        ]
+        for name, song_val, user_val in numeric_pairs:
+            fs = 1.0 - abs(song_val - user_val)
+            scores[name] = fs
+            reasons.append(f"{name}: {fs:.2f} (weighted +{fs * weights[name]:.2f})")
+
+        total = sum(scores[f] * weights[f] for f in weights)
+        final = total / sum(weights.values())
+        return (final, reasons)
+
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        # TODO: Implement recommendation logic
-        return self.songs[:k]
+        scored = [(song, self._score_song(user, song)[0]) for song in self.songs]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [song for song, _ in scored[:k]]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        # TODO: Implement explanation logic
-        return "Explanation placeholder"
+        score, reasons = self._score_song(user, song)
+        return f"Score: {score:.3f} | " + "; ".join(reasons)
 
 def load_songs(csv_path: str) -> List[Dict]:
     """Read a CSV file and return a list of song dictionaries with numeric fields converted."""

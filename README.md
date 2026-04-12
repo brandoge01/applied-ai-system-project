@@ -2,16 +2,7 @@
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+VibeFinder 1.0 is a content-based music recommender that scores 20 songs against a user's taste profile using genre, mood, energy, and other numeric features. It returns the top 5 matches with explanations for each score. We tested it with 6 user profiles, ran weight experiments to expose scoring flaws, and documented the biases we found in the model card.
 
 ---
 
@@ -36,6 +27,13 @@ Catalog bias - The system can only recommend what's in the dataset. If most song
 Equal feature treatment - The 0-to-1 proximity formula treats all distances the same. In reality, a 0.1 difference in energy might matter more than a 0.1 difference in valence.
 
 ![alt text](image.png)
+
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
+![alt text](image-5.png)
+![alt text](image-6.png)
 ---
 
 ## Getting Started
@@ -75,25 +73,20 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
-
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+Weight shift: Doubled energy weight (2.0 to 4.0) and halved genre weight (2.0 to 1.0). This fixed the "Sad but High-Energy" problem. Storm Runner jumped to #1 instead of a quiet folk ballad. Labels stopped dominating and the system started caring more about how a song actually sounds.
+Adversarial profiles: Tested a user who wants reggae (no matches in catalog) and one who maxes out every feature. The reggae user got low-confidence results (~0.68 vs the usual 0.95+). The all-extremes user exposed contradictions. You can't be fully acoustic and fully electronic at the same time, and the system couldn't say that.
+Profile comparisons: Compared lofi vs pop, pop vs rock, and lofi vs sad-but-energetic. The interesting finding was that Gym Hero kept showing up for both the pop fan and the rock fan because its high energy worked for both, even though the mood was wrong for pop.
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
+- 20 songs in the catalog
+- Some genres have 1 song, so the system can't give meaningful variety for those users
+- Genre weight (2.0) dominates scoring. A mediocre genre match beats a song that nails energy and mood but has the wrong label.
+- Content-based filtering creates a filter bubble. It only recommends what you already like and will never surface a cross-genre surprise.
+- The system doesn't understand lyrics, language, or cultural context. Two "happy" songs can feel completely different and it wouldn't know.
+- The proximity formula treats all 0.1 gaps equally. A 0.1 difference in energy probably matters more than a 0.1 difference in valence, but the system can't tell.
 
 ---
 
@@ -108,6 +101,9 @@ Write 1 to 2 paragraphs here about what you learned:
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
 
+Recommenders turn data into predictions by measuring distance between scores but the weights we assign to each feature quietly decides which distance mattes more. Weighting genres at 2.0 means a lofi track can outrank a folk song that perfectly matches the energy and mood. The math of the algorith mis neutral but the weighting isn't. Our opinions on what matters the most get engraved in the formula and make it an "objective" score. 
+
+Bias shows up in unexpected places like the catalog. Since there are 3 lofi songs but only 1 hip-hop track, the system serves some users better than others before the algorithm even comes into play. Content-based filtering is also a bubble by design as it only recommends tracks that resemble the user's current taste. It won't push users towards new types of musics. If this were a real product, users with niche or cross-genre taste would get worse recommendations than users who fit neatly into one box.
 
 ---
 
