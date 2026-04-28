@@ -2,7 +2,7 @@
 
 ## 1. Model Name
 
-**VibeFinder 1.0**
+**VibeFinder 2.0** (RAG-Enhanced)
 
 ---
 
@@ -14,7 +14,13 @@ VibeFinder picks 5 songs from a small catalog based on your genre, mood, and vib
 
 ## 3. How the Model Works
 
-Real apps like Spotify blend collaborative filtering with content-based filtering. Since we don't have millions of listeners, VibeFinder uses content-based filtering only by matching song attributes directly to a user's taste profile. Each song gets scored from 0 to 1. Genre and mood are yes-or-no checks (match = 1.0, mismatch = 0.0). Then six numeric features get proximity scored: `score = 1 - |song_value - user_preference|`. Closer to what you want means a higher score. Each feature is weighted differently through genre and energy matter most (2.0), mood and acousticness next (1.5), the rest at 1.0 or below. Everything gets averaged into one final score, and the top 5 win.
+VibeFinder 2.0 uses a three-stage RAG (Retrieval-Augmented Generation) pipeline:
+
+1. **Retrieve** — The scoring engine matches song attributes to a user's taste profile. Each song gets scored from 0 to 1. Genre and mood are yes-or-no checks (match = 1.0, mismatch = 0.0). Six numeric features get proximity scored: `score = 1 - |song_value - user_preference|`. Each feature is weighted (genre and energy at 2.0, mood and acousticness at 1.5, the rest at 1.0 or below). The top-k songs are returned with scores and reasons.
+
+2. **Augment** — The retrieved songs and user profile are formatted into structured prompt context. A grounding constraint tells the AI to only reference songs from the retrieved set.
+
+3. **Generate** — The Anthropic Claude API reads the retrieved context and produces a conversational recommendation narrative that explains why each song matches, references specific audio features, and suggests which song to try first.
 
 ---
 
@@ -47,6 +53,8 @@ Tested 6 profiles: 3 standard (Lofi Listener, Pop Fan, Rock Fan) and 3 adversari
 Collaborative filtering - Track what multiple users like so we can say "people like you also enjoyed this" and break the filter bubble.
 Adaptive weights - Let the system learn which features matter most per user instead of using the same fixed numbers for everyone.
 Diversity controls - Force at least one unexpected song into the top 5 so it doesn't feel like the same playlist every time.
+Multi-turn conversation - Let users refine recommendations by chatting back and forth with Claude instead of re-adjusting sliders.
+Evaluation harness - Compare Claude's explanations against human judgments to measure whether the AI analysis actually helps users find songs they like.
 
 ---
 
